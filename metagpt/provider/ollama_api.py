@@ -38,7 +38,22 @@ class OllamaMessageBase:
         raise NotImplementedError
 
     def decode(self, response: OpenAIResponse) -> dict:
-        return json.loads(response.data.decode("utf-8"))
+        # Split the response data by newlines and parse each JSON object
+        json_objects = response.data.decode("utf-8").strip().split("\n")
+        
+        # Parse the first JSON object to get the role
+        first_object = json.loads(json_objects[0])
+        role = first_object["message"]["role"]
+        
+        # Extract and concatenate the content from each JSON object
+        combined_content = " ".join(json.loads(obj)["message"]["content"].strip() for obj in json_objects)
+        
+        # Return a single dictionary with the combined content and consistent role
+        return {
+            "model": first_object["model"],
+            "message": {"role": role, "content": combined_content},
+            "done": json.loads(json_objects[-1])["done"]
+        }
 
     def get_choice(self, to_choice_dict: dict) -> str:
         raise NotImplementedError
