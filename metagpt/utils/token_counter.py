@@ -98,7 +98,9 @@ TOKEN_COSTS = {
     "doubao-pro-128k-240515": {"prompt": 0.0007, "completion": 0.0013},
     "llama3-70b-llama3-70b-instruct": {"prompt": 0.0, "completion": 0.0},
     "llama3-8b-llama3-8b-instruct": {"prompt": 0.0, "completion": 0.0},
-}
+    "nvidia/Llama-3.1-Nemotron-70B-Instruct-HF": {"prompt": 0.00015, "completion": 0.0015},
+
+    }
 
 
 """
@@ -279,6 +281,7 @@ TOKEN_MAX = {
     "yi-large": 16385,
     "microsoft/wizardlm-2-8x22b": 65536,
     "meta-llama/llama-3-70b-instruct": 8192,
+    "nvidia/Llama-3.1-Nemotron-70B-Instruct-HF": 8192,
     "llama3-70b-8192": 8192,
     "openai/gpt-3.5-turbo-0125": 16385,
     "openai/gpt-4-turbo-preview": 128000,
@@ -423,6 +426,7 @@ def count_input_tokens(messages, model="gpt-3.5-turbo-0125"):
         "o1-preview-2024-09-12",
         "o1-mini",
         "o1-mini-2024-09-12",
+        "nvidia/Llama-3.1-Nemotron-70B-Instruct-HF",  # targon
     }:
         tokens_per_message = 3  # # every reply is primed with <|start|>assistant<|message|>
         tokens_per_name = 1
@@ -450,6 +454,7 @@ def count_input_tokens(messages, model="gpt-3.5-turbo-0125"):
         )
     num_tokens = 0
     for message in messages:
+        logger.info(f"Message: {message}")
         num_tokens += tokens_per_message
         for key, value in message.items():
             content = value

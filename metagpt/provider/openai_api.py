@@ -139,14 +139,19 @@ class OpenAILLM(BaseLLM):
             # compatible to openai o1-series
             kwargs["temperature"] = 1
             kwargs.pop("max_tokens")
+        if b"hub-api.sybil.com" == self.aclient.base_url.raw_host:
+            kwargs.pop("max_tokens")
         if extra_kwargs:
             kwargs.update(extra_kwargs)
         return kwargs
 
     async def _achat_completion(self, messages: list[dict], timeout=USE_CONFIG_TIMEOUT) -> ChatCompletion:
         kwargs = self._cons_kwargs(messages, timeout=self.get_timeout(timeout))
-        rsp: ChatCompletion = await self.aclient.chat.completions.create(**kwargs)
-        self._update_costs(rsp.usage)
+        stream = b"hub-api.sybil.com" == self.aclient.base_url.raw_host  # allowing targon to run
+        rsp: ChatCompletion = await self.aclient.chat.completions.create(**kwargs, stream=stream)
+        if not stream:
+            self._update_costs(rsp.usage)
+        # todo: update stream cost
         return rsp
 
     async def acompletion(self, messages: list[dict], timeout=USE_CONFIG_TIMEOUT) -> ChatCompletion:
@@ -161,7 +166,7 @@ class OpenAILLM(BaseLLM):
     )
     async def acompletion_text(self, messages: list[dict], stream=False, timeout=USE_CONFIG_TIMEOUT) -> str:
         """when streaming, print each token in place."""
-        if stream:
+        if stream or b"hub-api.sybil.com" == self.aclient.base_url.raw_host:  # targon does only provide stream
             return await self._achat_completion_stream(messages, timeout=timeout)
 
         rsp = await self._achat_completion(messages, timeout=self.get_timeout(timeout))
